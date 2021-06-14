@@ -11,7 +11,6 @@ namespace ThinkBridge.Shop.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Consumes("application/json")]
     public partial class PictureController : ControllerBase
     {
         #region Fields

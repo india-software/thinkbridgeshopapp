@@ -15,7 +15,6 @@ namespace ThinkBridge.Shop.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Consumes("application/json")]
     public class ManufacturerController : ControllerBase
     {
         private readonly IManufacturerService _manufacturerService;

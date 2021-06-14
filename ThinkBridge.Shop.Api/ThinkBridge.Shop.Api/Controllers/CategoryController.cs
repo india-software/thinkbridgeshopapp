@@ -15,7 +15,6 @@ namespace ThinkBridge.Shop.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Consumes("application/json")]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
