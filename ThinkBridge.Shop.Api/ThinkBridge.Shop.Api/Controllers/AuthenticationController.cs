@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using ThinkBridge.Shop.Api.ViewModel;
 using ThinkBridge.Shop.Core.Customer;
 using ThinkBridge.Shop.Services;
+using ThinkBridge.Shop.Services.Customer;
 
 namespace ThinkBridge.Shop.Api.Controllers
 {
@@ -22,12 +23,17 @@ namespace ThinkBridge.Shop.Api.Controllers
         private readonly UserManagerService _userManager;
         private readonly RoleManagerService _roleManager;
         private readonly IConfiguration _configuration;
+        private readonly ITokenService _tokenService;
 
-        public AuthenticationController(UserManagerService userManager, RoleManagerService roleManager, IConfiguration configuration)
+        public AuthenticationController(UserManagerService userManager,
+            RoleManagerService roleManager,
+            IConfiguration configuration,
+             ITokenService tokenService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
+            _tokenService = tokenService;
         }
 
         [HttpPost]
@@ -103,28 +109,34 @@ namespace ThinkBridge.Shop.Api.Controllers
                     new Claim(ClaimTypes.Name, user.UserName),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
-                foreach (var userRole in userRoles)
-                {
-                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-                }
-                var authSiginKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]));
-                var token = new JwtSecurityToken(
-                    issuer: _configuration["JWT:ValidIssuer"],
-                    audience: _configuration["JWT:ValidAudience"],
-                    expires: DateTime.Now.AddDays(1),
-                    claims: authClaims,
-                    signingCredentials: new SigningCredentials(authSiginKey, SecurityAlgorithms.HmacSha256Signature)
-                    );
 
-                return Ok(new
-                {
-                    token = new JwtSecurityTokenHandler().WriteToken(token),
-                    ValidTo = token.ValidTo.ToString("yyyy-MM-ddThh:mm:ss")
-                });
+                foreach (var userRole in userRoles)
+                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+
+                var token = _tokenService.GenerateAccessToken(authClaims);
+
+                return Ok(token);
             }
             return Unauthorized();
         }
         
-        
+        [HttpPost]
+        [Route("RefreshToken")]
+        public async Task<IActionResult> RefreshToken(ThinkBridgeToken thinkBridgeToken)
+        {
+            if (thinkBridgeToken is null)
+                return BadRequest("Invalid client request");
+
+            string accessToken = thinkBridgeToken.AccessToken;
+            var principal = _tokenService.GetPrincipalFromExpiredToken(accessToken);
+            var username = principal.Identity.Name; //this is mapped to the Name claim by default
+            var user = await _userManager.FindByNameAsync(username);
+
+            if (user == null)
+                return BadRequest("Invalid client request");
+
+            var newAccessToken = _tokenService.GenerateAccessToken(principal.Claims);
+            return Ok(newAccessToken);
+        }
     }
 }
