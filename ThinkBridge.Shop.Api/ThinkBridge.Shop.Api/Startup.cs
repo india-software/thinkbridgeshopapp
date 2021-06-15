@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -88,7 +89,13 @@ namespace ThinkBridge.Shop.Api
 
             });
             //for swagger
-           
+            services.AddSwaggerGen(x => x.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "Think Bridge Shop Api",
+                Description = "Think Bridge Shop Api",
+                Contact = new OpenApiContact() { Name = "Munna Kumar Singh", Email = "singh@munna316@gmail.com" }
+            }));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -97,6 +104,14 @@ namespace ThinkBridge.Shop.Api
             if (string.IsNullOrWhiteSpace(env.WebRootPath))
                 env.WebRootPath = Path.Combine(Directory.GetCurrentDirectory(), "Upload");
 
+            // This middleware serves generated Swagger document as a JSON endpoint
+            app.UseSwagger();
+
+            // This middleware serves the Swagger documentation UI
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Employee API V1");
+            });
             if (env.IsDevelopment())
             {                
                 app.UseDeveloperExceptionPage();               
