@@ -13,7 +13,7 @@ namespace ThinkBridge.Shop.Services.FileHelper
     public class ThinkBridgeFileProvider : PhysicalFileProvider, IFileHelperService
     {
         /// <summary>
-        /// Initializes a new instance of a NopFileProvider
+        /// Initializes a new instance 
         /// </summary>
         /// <param name="hostingEnvironment">Hosting environment</param>
         
